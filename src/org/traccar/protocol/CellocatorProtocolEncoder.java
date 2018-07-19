@@ -58,7 +58,18 @@ public class CellocatorProtocolEncoder extends BaseProtocolEncoder {
             case Command.TYPE_OUTPUT_CONTROL:
                 int data = Integer.parseInt(command.getString(Command.KEY_DATA)) << 4
                         + command.getInteger(Command.KEY_INDEX);
+                // command.setDescription("Output");
                 return encodeContent(command.getDeviceId(), 0x03, data, 0);
+            case Command.TYPE_GET_DEVICE_STATUS:
+                // command.setDescription("Get device status");
+                return encodeContent(command.getDeviceId(), 0x00, 0, 0);
+            case Command.TYPE_REBOOT_DEVICE:
+                return encodeContent(command.getDeviceId(), 0x02, 0x02, 0);
+            case Command.TYPE_ERASE_LOG:
+                return encodeContent(command.getDeviceId(), 0x0D, 0, 0);
+            case Command.TYPE_RESET_GPS:
+                return encodeContent(command.getDeviceId(), 0x0E, 0x5A, 0xA5);
+
             default:
                 Log.warning(new UnsupportedOperationException(command.getType()));
                 break;
