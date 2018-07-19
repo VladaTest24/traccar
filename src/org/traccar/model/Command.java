@@ -51,6 +51,8 @@ public class Command extends Message implements Cloneable {
     public static final String TYPE_SET_ODOMETER = "setOdometer";
     public static final String TYPE_GET_MODEM_STATUS = "getModemStatus";
     public static final String TYPE_GET_DEVICE_STATUS = "getDeviceStatus";
+    public static final String TYPE_ERASE_LOG = "eraseDeviceLog";
+    public static final String TYPE_RESET_GPS = "resetDeviceGPS";
 
     public static final String TYPE_MODE_POWER_SAVING = "modePowerSaving";
     public static final String TYPE_MODE_DEEP_SLEEP = "modeDeepSleep";
