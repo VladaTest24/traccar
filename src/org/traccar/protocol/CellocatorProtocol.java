@@ -21,7 +21,7 @@ import org.traccar.TrackerServer;
 import org.traccar.model.Command;
 
 import java.util.List;
-//test
+
 public class CellocatorProtocol extends BaseProtocol {
 
     public CellocatorProtocol() {
