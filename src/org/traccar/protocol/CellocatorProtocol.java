@@ -27,7 +27,11 @@ public class CellocatorProtocol extends BaseProtocol {
     public CellocatorProtocol() {
         super("cellocator");
         setSupportedDataCommands(
-                Command.TYPE_OUTPUT_CONTROL);
+                Command.TYPE_OUTPUT_CONTROL,
+                Command.TYPE_GET_DEVICE_STATUS,
+                Command.TYPE_REBOOT_DEVICE,
+                Command.TYPE_ERASE_LOG,
+                Command.TYPE_RESET_GPS);
     }
 
     @Override
