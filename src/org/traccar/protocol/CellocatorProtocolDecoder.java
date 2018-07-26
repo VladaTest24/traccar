@@ -24,6 +24,8 @@ import org.traccar.NetworkMessage;
 import org.traccar.helper.DateBuilder;
 import org.traccar.helper.UnitsConverter;
 import org.traccar.model.Position;
+import org.traccar.model.CellTower;
+import org.traccar.model.Network;
 
 import java.net.SocketAddress;
 
@@ -37,7 +39,8 @@ public class CellocatorProtocolDecoder extends BaseProtocolDecoder {
     static final int MSG_CLIENT_PROGRAMMING = 3;
     static final int MSG_CLIENT_SERIAL_LOG = 7;
     static final int MSG_CLIENT_SERIAL = 8;
-    static final int MSG_CLIENT_MODULAR = 9;
+    static final int MSG_CLIENT_MODULAR = 9; //Ova sadrzi CellID
+    static final int MSG_MODULAR_NEIGHBOR_LIST = 9;
     private static final double CELLO_TRACK_BATTERY_CONST = 0.01953125;
     private static final double COMPACT_SECURITY_BATTERY_CONST = 0.1217320;
     private double batteryConst;
@@ -355,6 +358,7 @@ public class CellocatorProtocolDecoder extends BaseProtocolDecoder {
         if (type == MSG_CLIENT_STATUS) {
 
             Position position = new Position(getProtocolName());
+            position.setValid(true);
 
             DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, String.valueOf(deviceUniqueId));
             if (deviceSession == null) {
@@ -422,6 +426,58 @@ public class CellocatorProtocolDecoder extends BaseProtocolDecoder {
             position.setTime(dateBuilder.getDate());
 
             return position;
+        } else {
+            if (type == MSG_CLIENT_MODULAR ) {
+                Position position = new Position(getProtocolName());
+                position.setValid(true);
+
+                DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, String.valueOf(deviceUniqueId));
+                if (deviceSession == null) {
+                    return null;
+                }
+                position.setDeviceId(deviceSession.getDeviceId());
+
+                buf.readUnsignedByte(); // Packet control field
+                int totalDataLength = buf.readUnsignedByte();
+
+                CellTower cellTower = null;
+                while (totalDataLength > 0) {
+                    int dataType = buf.readUnsignedByte();
+                    switch (dataType) {
+                        case MSG_MODULAR_NEIGHBOR_LIST:
+                            int subDataLength = buf.readUnsignedByte();
+                            totalDataLength -= subDataLength;
+                            buf.readUnsignedByte(); // Spare byte
+                            DateBuilder dateBuilder = new DateBuilder()
+                                    .setTimeReverse(buf.readUnsignedByte(), buf.readUnsignedByte(), buf.readUnsignedByte())
+                                    .setDateReverse(buf.readUnsignedByte(), buf.readUnsignedByte(),
+                                            2000 + buf.readUnsignedShortLE());
+                            // Actual year minus 2000 eg value of 7 = year 2007
+                            position.setTime(dateBuilder.getDate());
+                            subDataLength -= 7;
+                            while (subDataLength > 0) {
+                                cellTower = new CellTower();
+                                buf.readUnsignedByte(); // BSIC
+
+                                cellTower.setLocationAreaCode(buf.readUnsignedByte() + (buf.readUnsignedByte() << 8));
+                                long cellID = buf.readUnsignedByte() + (buf.readUnsignedByte() << 8);
+                                cellTower.setCellId(cellID);
+                                cellTower.setRadioType("GSM");
+                                int signalStrength = buf.readUnsignedByte();
+                                cellTower.setSignalStrength(signalStrength);
+                                subDataLength -= 6;
+                            }
+                            break;
+                        default:
+                            subDataLength = buf.readUnsignedByte(); //za bilo koji drugi tip preskace ga i smanjuje ...
+                            totalDataLength -= subDataLength;
+                            buf.readBytes(subDataLength);
+                            break;
+                    }
+                }
+                Network network = new Network();
+                network.addCellTower(cellTower); // Vidi kako se dalje poziva API
+            }
         }
 
         return null;
