@@ -23,4 +23,13 @@
     <entry key='database.user'>sa</entry>
     <entry key='database.password'></entry>
 
+    <entry key='geocoder.enable'>true</entry>
+    <entry key='geocoder.type'>nominatim</entry>
+    <entry key='geocoder.url'>https://locationiq.org/v1/reverse.php</entry>
+    <entry key='geocoder.key'>b15c8740bb537c</entry>
+    <entry key='geolocation.processInvalidPositions'>true</entry>
+
+    <entry key='geolocation.enable'>true</entry>
+    <entry key='geolocation.type'>opencellid</entry>
+    <entry key='geolocation.key'>ad26d575fd46be</entry>
 </properties>

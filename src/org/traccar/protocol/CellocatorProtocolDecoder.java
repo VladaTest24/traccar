@@ -477,6 +477,9 @@ public class CellocatorProtocolDecoder extends BaseProtocolDecoder {
                 }
                 Network network = new Network();
                 network.addCellTower(cellTower); // Vidi kako se dalje poziva API
+                position.setNetwork(network);
+
+                return position;
             }
         }
 
