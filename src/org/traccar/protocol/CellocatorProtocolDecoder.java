@@ -334,7 +334,7 @@ public class CellocatorProtocolDecoder extends BaseProtocolDecoder {
             case 255:
                 return "Violation of Way Point";
             default:
-                return "Unrecognised cause";
+                return "Unrecognised cause"; // TODO Proveri novi Transmission reason za CellID
         }
     }
 
@@ -441,17 +441,23 @@ public class CellocatorProtocolDecoder extends BaseProtocolDecoder {
                 int totalDataLength = buf.readUnsignedByte();
 
                 CellTower cellTower = null;
-                while (totalDataLength > 0) {
+                while (totalDataLength > 0) { //TODO proveri da li treba ova petlja
                     int dataType = buf.readUnsignedByte();
                     switch (dataType) {
                         case MSG_MODULAR_NEIGHBOR_LIST:
                             int subDataLength = buf.readUnsignedByte();
                             totalDataLength -= subDataLength;
                             buf.readUnsignedByte(); // Spare byte
+                            int cellHour = buf.readUnsignedByte(); //TODO Proveri vrednosti datuma i vremena
+                            int cellMinute = buf.readUnsignedByte();
+                            int cellSec = buf.readUnsignedByte();
+                            int cellYear = buf.readUnsignedByte();
+                            int cellMonth = buf.readUnsignedByte();
+                            int cellDay = 2000 + buf.readUnsignedShortLE(); // TODO da li ovo treba u godinu ???
+
                             DateBuilder dateBuilder = new DateBuilder()
-                                    .setTimeReverse(buf.readUnsignedByte(), buf.readUnsignedByte(), buf.readUnsignedByte())
-                                    .setDateReverse(buf.readUnsignedByte(), buf.readUnsignedByte(),
-                                            2000 + buf.readUnsignedShortLE());
+                                    .setTime(cellHour, cellMinute, cellSec)
+                                    .setDate(cellYear, cellMonth, cellDay);
                             // Actual year minus 2000 eg value of 7 = year 2007
                             position.setTime(dateBuilder.getDate());
                             subDataLength -= 7;
@@ -459,7 +465,8 @@ public class CellocatorProtocolDecoder extends BaseProtocolDecoder {
                                 cellTower = new CellTower();
                                 buf.readUnsignedByte(); // BSIC
 
-                                cellTower.setLocationAreaCode(buf.readUnsignedByte() + (buf.readUnsignedByte() << 8));
+                                int lacID = buf.readUnsignedByte() + (buf.readUnsignedByte() << 8);
+                                cellTower.setLocationAreaCode(lacID); // TODO proveri vrednosti LAC i CellID
                                 long cellID = buf.readUnsignedByte() + (buf.readUnsignedByte() << 8);
                                 cellTower.setCellId(cellID);
                                 cellTower.setRadioType("GSM");
@@ -476,7 +483,7 @@ public class CellocatorProtocolDecoder extends BaseProtocolDecoder {
                     }
                 }
                 Network network = new Network();
-                network.addCellTower(cellTower); // Vidi kako se dalje poziva API
+                network.addCellTower(cellTower); // TODO Vidi kako se dalje poziva API i da li je ok adresa
                 position.setNetwork(network);
 
                 return position;
