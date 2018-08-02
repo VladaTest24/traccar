@@ -26,6 +26,8 @@ import org.traccar.helper.UnitsConverter;
 import org.traccar.model.Position;
 import org.traccar.model.CellTower;
 import org.traccar.model.Network;
+import org.traccar.geolocation.GeolocationProvider;
+import org.traccar.geolocation.OpenCellIdGeolocationProvider;
 
 import java.net.SocketAddress;
 
@@ -358,7 +360,7 @@ public class CellocatorProtocolDecoder extends BaseProtocolDecoder {
         if (type == MSG_CLIENT_STATUS) {
 
             Position position = new Position(getProtocolName());
-            position.setValid(true);
+           // position.setValid(true);
 
             DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, String.valueOf(deviceUniqueId));
             if (deviceSession == null) {
@@ -426,9 +428,9 @@ public class CellocatorProtocolDecoder extends BaseProtocolDecoder {
             position.setTime(dateBuilder.getDate());
 
             return position;
-        } else {
+        } /*else {
             if (type == MSG_CLIENT_MODULAR ) {
-                Position position = new Position(getProtocolName());
+                final Position position = new Position(getProtocolName());
                 position.setValid(true);
 
                 DeviceSession deviceSession = getDeviceSession(channel, remoteAddress, String.valueOf(deviceUniqueId));
@@ -448,12 +450,12 @@ public class CellocatorProtocolDecoder extends BaseProtocolDecoder {
                             int subDataLength = buf.readUnsignedByte();
                             totalDataLength -= subDataLength;
                             buf.readUnsignedByte(); // Spare byte
-                            int cellHour = buf.readUnsignedByte(); //TODO Proveri vrednosti datuma i vremena
-                            int cellMinute = buf.readUnsignedByte();
                             int cellSec = buf.readUnsignedByte();
-                            int cellYear = buf.readUnsignedByte();
+                            int cellMinute = buf.readUnsignedByte();
+                            int cellHour = buf.readUnsignedByte(); //TODO Proveri vrednosti datuma i vremena
+                            int cellDay = buf.readUnsignedByte(); // TODO da li ovo treba u godinu ???
                             int cellMonth = buf.readUnsignedByte();
-                            int cellDay = 2000 + buf.readUnsignedShortLE(); // TODO da li ovo treba u godinu ???
+                            int cellYear = 2000 + buf.readUnsignedByte();
 
                             DateBuilder dateBuilder = new DateBuilder()
                                     .setTime(cellHour, cellMinute, cellSec)
@@ -461,10 +463,12 @@ public class CellocatorProtocolDecoder extends BaseProtocolDecoder {
                             // Actual year minus 2000 eg value of 7 = year 2007
                             position.setTime(dateBuilder.getDate());
                             subDataLength -= 7;
-                            while (subDataLength > 0) {
+                            Network network = new Network();
+                            while (subDataLength > 6) {
                                 cellTower = new CellTower();
                                 buf.readUnsignedByte(); // BSIC
-
+                                cellTower.setMobileCountryCode(220);
+                                cellTower.setMobileNetworkCode(03);
                                 int lacID = buf.readUnsignedByte() + (buf.readUnsignedByte() << 8);
                                 cellTower.setLocationAreaCode(lacID); // TODO proveri vrednosti LAC i CellID
                                 long cellID = buf.readUnsignedByte() + (buf.readUnsignedByte() << 8);
@@ -473,22 +477,46 @@ public class CellocatorProtocolDecoder extends BaseProtocolDecoder {
                                 int signalStrength = buf.readUnsignedByte();
                                 cellTower.setSignalStrength(signalStrength);
                                 subDataLength -= 6;
+                                network.addCellTower(cellTower); // TODO Vidi kako se dalje poziva API i da li je ok adresa
                             }
-                            break;
+                            position.setNetwork(network);
+                            OpenCellIdGeolocationProvider provider = new OpenCellIdGeolocationProvider("ad26d575fd46be");
+                            provider.getLocation(network, new OpenCellIdGeolocationProvider.LocationProviderCallback() {
+                                @Override
+                                public void onSuccess(double latitude, double longitude, double accuracy) {
+                                    position.set(Position.KEY_APPROXIMATE, true);
+                                    position.setValid(true);
+                                    position.setFixTime(position.getDeviceTime());
+                                    position.setLatitude(latitude);
+                                    position.setLongitude(longitude);
+                                    position.setAccuracy(accuracy);
+                                    position.setAltitude(0);
+                                    position.setSpeed(0);
+                                    position.setCourse(0);
+                                    position.set(Position.KEY_RSSI, 0);
+                                }
+
+                                @Override
+                                public void onFailure(Throwable e) {
+
+                                }
+                            });
+
+                        return position;
+
                         default:
                             subDataLength = buf.readUnsignedByte(); //za bilo koji drugi tip preskace ga i smanjuje ...
                             totalDataLength -= subDataLength;
                             buf.readBytes(subDataLength);
                             break;
                     }
-                }
-                Network network = new Network();
-                network.addCellTower(cellTower); // TODO Vidi kako se dalje poziva API i da li je ok adresa
-                position.setNetwork(network);
 
-                return position;
+                }
+
+
+
             }
-        }
+        }*/
 
         return null;
     }

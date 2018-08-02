@@ -32,4 +32,5 @@
     <entry key='geolocation.enable'>true</entry>
     <entry key='geolocation.type'>opencellid</entry>
     <entry key='geolocation.key'>ad26d575fd46be</entry>
+
 </properties>
