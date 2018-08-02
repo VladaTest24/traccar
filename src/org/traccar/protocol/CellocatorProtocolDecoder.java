@@ -380,7 +380,7 @@ public class CellocatorProtocolDecoder extends BaseProtocolDecoder {
                     batteryConst = COMPACT_SECURITY_BATTERY_CONST;
                     break;
             }
-            position.set(Position.KEY_VERSION_HW, buf.readUnsignedByte()); // Unit’s hardware version
+            //position.set(Position.KEY_VERSION_HW, buf.readUnsignedByte()); // Unit’s hardware version
             position.set(Position.KEY_VERSION_FW, buf.readUnsignedByte()); // Unit’s software version
             position.set("protocolVersion", buf.readUnsignedByte()); // Protocol Version Identifier
 
